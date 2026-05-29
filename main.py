@@ -13,7 +13,7 @@ import shutil
 
 BOT_TOKEN = "8957337087:AAG6HaBuZCetA5VAZtkXJZEPSfDxK3B24LU"
 
-# BAKONG TOKEN
+# GET TOKEN:
 # https://developer.bakong.nbc.gov.kh/
 BAKONG_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImlkIjoiNTUxNmFhYjBkY2RiNDZkZiJ9LCJpYXQiOjE3Nzk5NzA1ODksImV4cCI6MTc4Nzc0NjU4OX0.3YQkq6xPsC6-bY5dV0dxFY-h8xcJgwdZiwRz-G1ibMc"
 
@@ -21,7 +21,7 @@ ADMIN_ID = 8697847759
 GROUP_ID = -1003981921256
 
 BANK_ACCOUNT = "sokkhem_mov@trmc"
-MERCHANT_NAME = "LYHENGSMM BOT"
+MERCHANT_NAME = "LYHENG SMM BOT"
 PHONE_NUMBER = "0884139775"
 
 # =========================================
@@ -42,7 +42,7 @@ conn = sqlite3.connect(
 
 cursor = conn.cursor()
 
-# USERS TABLE
+# USERS
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS users(
     user_id INTEGER PRIMARY KEY,
@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS users(
 )
 """)
 
-# ORDERS TABLE
+# ORDERS
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS orders(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -140,11 +140,8 @@ for query in fix_queries:
         cursor.execute(query)
         conn.commit()
 
-        print("✅ DATABASE FIXED")
-
-    except Exception as e:
-
-        print("FIX:", e)
+    except:
+        pass
 
 # =========================================
 # PACKAGES
@@ -180,7 +177,7 @@ BOOST_PACKAGES = {
 }
 
 # =========================================
-# MENU
+# MENUS
 # =========================================
 
 def main_menu(is_admin=False):
@@ -235,6 +232,24 @@ def boost_menu():
         markup.row(package)
 
     markup.row("⬅️ Back To TikTok")
+    markup.row("🏠 Main Menu")
+
+    return markup
+
+def admin_menu():
+
+    markup = types.ReplyKeyboardMarkup(
+        resize_keyboard=True
+    )
+
+    markup.row("➕ Add Balance")
+    markup.row("➖ Remove Balance")
+
+    markup.row("🚫 Ban User")
+    markup.row("✅ Unban User")
+
+    markup.row("📦 All Orders")
+
     markup.row("🏠 Main Menu")
 
     return markup
@@ -354,8 +369,6 @@ def boost(message):
 """
 🔥 TikTok Boost Khmer
 
-📌 Available Packages
-
 📊 300-800 Like = $0.99
 📊 600-1.6K Like = $1.50
 📊 827-2.1K Like = $2.00
@@ -366,7 +379,7 @@ def boost(message):
     )
 
 # =========================================
-# BUY BOOST
+# BUY PACKAGE
 # =========================================
 
 @bot.message_handler(func=lambda m: m.text in BOOST_PACKAGES)
@@ -394,19 +407,17 @@ def buy_package(message):
 f"""
 ❌ គណនីរបស់អ្នកមិនគ្រប់គ្រាន់ទេ
 
-💰 Package Price: ${price}
+💰 តម្លៃ: ${price}
 💵 Balance: ${round(balance,2)}
 
-🙏 សូមបញ្ចូលទឹកប្រាក់
+🙏 សូមដាក់ប្រាក់ជាមុន
 """
         )
         return
 
     msg = bot.send_message(
         message.chat.id,
-"""
-🔗 សូមផ្ញើ Link Video TikTok
-"""
+        "🔗 សូមផ្ញើ Link TikTok"
     )
 
     bot.register_next_step_handler(
@@ -477,14 +488,12 @@ def process_order(
 
     conn.commit()
 
-    # SEND GROUP
     bot.send_message(
         GROUP_ID,
 f"""
 📦 NEW ORDER
 
-🆔 Order ID:
-{order_id}
+🆔 {order_id}
 
 👤 USER:
 {user_id}
@@ -503,27 +512,23 @@ Pending
 """
     )
 
-    # SUCCESS
     bot.send_message(
         message.chat.id,
 f"""
 ✅ ការបញ្ជាទិញជោគជ័យ
 
-📦 Package:
-{package_name}
+📦 {package_name}
 
-💰 Price:
-${price}
+💰 ${price}
 
-📌 Status:
-Pending
+📌 Status: Pending
 
 🙏 សូមអរគុណ
 """
     )
 
 # =========================================
-# ORDER HISTORY
+# HISTORY
 # =========================================
 
 @bot.message_handler(func=lambda m: m.text == "📦 ប្រវត្តិបញ្ជាទិញ")
@@ -573,9 +578,12 @@ def deposit(message):
     msg = bot.send_message(
         message.chat.id,
 """
-💳 ដាក់ប្រាក់
+💳 សូមបញ្ចូលចំនួនទឹកប្រាក់
 
-🙏 សូមបញ្ចូលចំនួនទឹកប្រាក់
+ឧទាហរណ៍:
+1
+5
+10
 """
     )
 
@@ -598,54 +606,68 @@ def create_payment(message):
 
         bot.send_message(
             message.chat.id,
-            "❌ ចំនួនទឹកប្រាក់មិនត្រឹមត្រូវ"
+            "❌ ចំនួនមិនត្រឹមត្រូវ"
         )
         return
 
-    bill_number = f"INV{int(time.time())}"
+    try:
 
-    qr = khqr.create_qr(
-        bank_account=BANK_ACCOUNT,
-        merchant_name=MERCHANT_NAME,
-        merchant_city="Phnom Penh",
-        amount=amount,
-        currency="USD",
-        bill_number=bill_number,
-        store_label="SMM BOT",
-        phone_number=PHONE_NUMBER,
-        terminal_label="BOT01",
-        static=False,
-        expiration=5
-    )
+        bill_number = f"INV{int(time.time())}"
 
-    qr_image = khqr.qr_image(qr)
+        qr = khqr.create_qr(
+            bank_account=BANK_ACCOUNT,
+            merchant_name=MERCHANT_NAME,
+            merchant_city="Phnom Penh",
+            amount=amount,
+            currency="USD",
+            bill_number=bill_number,
+            store_label="SMM BOT",
+            phone_number=PHONE_NUMBER,
+            terminal_label="BOT01",
+            static=False,
+            expiration=5
+        )
 
-    md5 = khqr.generate_md5(qr)
+        qr_image = khqr.qr_image(qr)
 
-    sent = bot.send_photo(
-        message.chat.id,
-        open(qr_image, "rb"),
+        md5 = khqr.generate_md5(qr)
+
+        sent = bot.send_photo(
+            message.chat.id,
+            open(qr_image, "rb"),
 f"""
 💳 ABA KHQR PAYMENT
 
-💰 Amount:
-${amount}
+💰 Amount: ${amount}
 
 ⌛ QR មានសុពលភាព 5 នាទី
 """
-    )
-
-    threading.Thread(
-        target=check_payment,
-        args=(
-            md5,
-            message.chat.id,
-            message.from_user.id,
-            amount,
-            sent.message_id,
-            qr_image
         )
-    ).start()
+
+        threading.Thread(
+            target=check_payment,
+            args=(
+                md5,
+                message.chat.id,
+                message.from_user.id,
+                amount,
+                sent.message_id,
+                qr_image
+            )
+        ).start()
+
+    except Exception as e:
+
+        print(e)
+
+        bot.send_message(
+            message.chat.id,
+"""
+❌ PAYMENT ERROR
+
+🔑 សូមពិនិត្យ BAKONG TOKEN
+"""
+        )
 
 # =========================================
 # CHECK PAYMENT
@@ -669,14 +691,8 @@ def check_payment(
             if time.time() > timeout:
 
                 try:
-
-                    bot.delete_message(
-                        chat_id,
-                        message_id
-                    )
-
+                    bot.delete_message(chat_id, message_id)
                     os.remove(qr_image)
-
                 except:
                     pass
 
@@ -704,13 +720,18 @@ def check_payment(
 
                 conn.commit()
 
+                try:
+                    bot.delete_message(chat_id, message_id)
+                    os.remove(qr_image)
+                except:
+                    pass
+
                 bot.send_message(
                     chat_id,
 f"""
 🎉 ការបង់ប្រាក់ជោគជ័យ
 
-💰 Amount:
-${amount}
+💰 ${amount}
 
 💳 Balance បានបន្ថែម
 """
@@ -726,21 +747,118 @@ ${amount}
             time.sleep(5)
 
 # =========================================
-# SUPPORT
+# ADMIN PANEL
 # =========================================
 
-@bot.message_handler(func=lambda m: m.text == "🆘 Support")
-def support(message):
+@bot.message_handler(func=lambda m: m.text == "🛠 Admin Panel")
+def admin_panel(message):
+
+    if message.from_user.id != ADMIN_ID:
+        return
 
     bot.send_message(
         message.chat.id,
-"""
-🆘 Support
-
-📩 Telegram:
-@yourusername
-"""
+        "🛠 ADMIN PANEL",
+        reply_markup=admin_menu()
     )
+
+# =========================================
+# ADD BALANCE
+# =========================================
+
+@bot.message_handler(func=lambda m: m.text == "➕ Add Balance")
+def add_balance(message):
+
+    if message.from_user.id != ADMIN_ID:
+        return
+
+    msg = bot.send_message(
+        message.chat.id,
+        "📥 USER_ID AMOUNT"
+    )
+
+    bot.register_next_step_handler(
+        msg,
+        process_add_balance
+    )
+
+def process_add_balance(message):
+
+    try:
+
+        data = message.text.split()
+
+        user_id = int(data[0])
+        amount = float(data[1])
+
+        cursor.execute("""
+        UPDATE users
+        SET balance = balance + ?
+        WHERE user_id=?
+        """, (
+            amount,
+            user_id
+        ))
+
+        conn.commit()
+
+        bot.send_message(
+            message.chat.id,
+            "✅ Balance Added"
+        )
+
+    except Exception as e:
+
+        print(e)
+
+# =========================================
+# REMOVE BALANCE
+# =========================================
+
+@bot.message_handler(func=lambda m: m.text == "➖ Remove Balance")
+def remove_balance(message):
+
+    if message.from_user.id != ADMIN_ID:
+        return
+
+    msg = bot.send_message(
+        message.chat.id,
+        "📥 USER_ID AMOUNT"
+    )
+
+    bot.register_next_step_handler(
+        msg,
+        process_remove_balance
+    )
+
+def process_remove_balance(message):
+
+    try:
+
+        data = message.text.split()
+
+        user_id = int(data[0])
+        amount = float(data[1])
+
+        cursor.execute("""
+        UPDATE users
+        SET balance = balance - ?
+        WHERE user_id=?
+        """, (
+            amount,
+            user_id
+        ))
+
+        conn.commit()
+
+        bot.send_message(
+            message.chat.id,
+            "✅ Balance Removed"
+        )
+
+    except Exception as e:
+
+        print(e)
 
 # =========================================
 # BACK BUTTONS
@@ -803,7 +921,7 @@ threading.Thread(
 ).start()
 
 # =========================================
-# RUN
+# RUN BOT
 # =========================================
 
 print("BOT RUNNING...")
