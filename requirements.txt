@@ -1,2 +1,1 @@
-pip install -r requirements.txt
 pyTelegramBotAPI bakong-khqr Pillow qrcode requests
