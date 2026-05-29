@@ -1,1 +1,5 @@
-pyTelegramBotAPI bakong-khqr Pillow qrcode requests
+pyTelegramBotAPI
+bakong-khqr
+Pillow
+qrcode
+requests
